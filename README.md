@@ -1,4 +1,2 @@
 # gyromorse
-# gyromorse
-# gyromorse
-# gyromorse
+
