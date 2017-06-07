@@ -59,7 +59,7 @@ public class MainActivity extends Activity implements SensorEventListener{
         // add listener. The listener will be MyActivity (this) class
         sensorManager.registerListener(this,
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_NORMAL);
+                SensorManager.SENSOR_DELAY_FASTEST);
 
         //copy from  //adding accelerometer data list values for the starting
         this.accelerometerDataList = new ArrayList<AccelerometerClass>();
