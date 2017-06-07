@@ -13,8 +13,10 @@ import android.os.Environment;
 import android.view.View;
 import android.widget.TextView;
 
+import java.io.OutputStreamWriter;
 import java.io.Serializable;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import java.io.FileOutputStream;
@@ -26,7 +28,7 @@ import java.util.List;
 public class MainActivity extends Activity implements SensorEventListener{
 
     private SensorManager sensorManager;
-    FileSave mFile = null;
+    //FileSave mFile = null;
 
 
     TextView xCoor; // declare X axis object
@@ -38,6 +40,10 @@ public class MainActivity extends Activity implements SensorEventListener{
 
     private List<AccelerometerClass> accelerometerDataList;
     private AccelerometerClass accelerometerData;
+
+    long curTime;
+    long diffTime;
+    long lastUpdate= System.currentTimeMillis();
 
 
     @Override
@@ -55,16 +61,23 @@ public class MainActivity extends Activity implements SensorEventListener{
                 sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
                 SensorManager.SENSOR_DELAY_NORMAL);
 
-        mFile = new FileSave("morse.txt", false);
+        //copy from  //adding accelerometer data list values for the starting
+        this.accelerometerDataList = new ArrayList<AccelerometerClass>();
+
+        //adding accelerometer data list values for the starting
+        this.accelerometerDataList.add(new AccelerometerClass(0, 0, 0, 0, 0));
+        /////////////////////////////////////////////////////////////////////////////
+
+        //mFile = new FileSave("morse.txt", false);
 
 
-        try {
+        /*try {
             File logFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"morsex.txt");
             output = new FileOutputStream(logFile);
             writer = new FileWriter(output.getFD());
         }catch(Exception e){
             e.printStackTrace();
-        }
+        }*/
     }
 
     // 当精度发生变化时调用
@@ -91,12 +104,67 @@ public class MainActivity extends Activity implements SensorEventListener{
             zCoor.setText("Z: "+z);
 
 
-            String Content = currentDateTimeString  + " " + event.values[0] + " " + event.values[1] + " " + event.values[2];
-            mFile.appendLog(Content);
+            //String Content = currentDateTimeString  + " " + event.values[0] + " " + event.values[1] + " " + event.values[2];
+            //mFile.appendLog(Content);
 
-            long tsLong = System.currentTimeMillis()/1000;
-            recordAccelData(x, y, z, tsLong);
+            //long tsLong = System.currentTimeMillis()/1000;
+            //recordAccelData(x, y, z, tsLong);
 
+            //calculating time lapse
+
+            this.accelerometerData = new AccelerometerClass();
+            this.accelerometerData.setxAxisValue(event.values[0]);
+            this.accelerometerData.setyAxisValue(event.values[1]);
+            this.accelerometerData.setzAxisValue(event.values[2]);
+            this.accelerometerData.setAccuracy(event.accuracy);
+
+            this.curTime = System.currentTimeMillis();
+            diffTime = (curTime - this.lastUpdate);
+            this.lastUpdate = curTime ;
+
+            //setting time lapse between consecutive datapoints
+            this.accelerometerData.setTimestamp(diffTime);
+
+            //adding the class to the list of accelerometer data points
+            this.accelerometerDataList.add(accelerometerData);
+
+
+        }
+    }
+
+    //method called when application is on pause
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        //unregistering sensor when application is on pause
+        //this is done to save battery
+        //mSensorManager.unregisterListener(this);
+
+        //saving data onto a file
+        //File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/accelerometerData.txt");
+        File myFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"gmorse.txt");
+
+        try {
+
+            myFile.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(myFile);
+
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            for(AccelerometerClass accel: this.accelerometerDataList) {
+                myOutWriter.append(String.valueOf(accel.getxAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getyAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getzAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getTimestamp()));
+                myOutWriter.append('\n');
+            }
+            myOutWriter.close();
+            fOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -107,13 +175,13 @@ public class MainActivity extends Activity implements SensorEventListener{
 
         //mFile.flushToLog();
 
-        try {
+        /*try {
             writer.close();
             output.getFD().sync();
             output.close();
         } catch (Exception e){
             e.printStackTrace();
-        }
+        }*/
     }
 
     public void recordAccelData(float x, float y, float z, Long tsLong){
