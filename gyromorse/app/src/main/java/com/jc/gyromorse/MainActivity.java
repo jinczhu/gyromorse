@@ -41,6 +41,8 @@ public class MainActivity extends Activity implements SensorEventListener{
     private List<AccelerometerClass> accelerometerDataList;
     private AccelerometerClass accelerometerData;
 
+    private DetectTap detecttap;
+
     long curTime;
     long diffTime;
     long lastUpdate= System.currentTimeMillis();
