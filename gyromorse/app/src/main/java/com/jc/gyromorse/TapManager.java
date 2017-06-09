@@ -21,6 +21,7 @@ package com.jc.gyromorse;
  */
 
 
+        import android.app.Activity;
         import android.content.BroadcastReceiver;
         import android.content.Intent;
         import android.content.IntentFilter;
@@ -28,8 +29,10 @@ package com.jc.gyromorse;
         import android.content.Context;
         import android.content.SharedPreferences;
         import android.hardware.SensorManager;
+        import android.os.Bundle;
         import android.support.v4.view.accessibility.AccessibilityEventCompat;
         import android.view.accessibility.AccessibilityEvent;
+        import android.widget.TextView;
 
         /*import com.android.talkback.controller.FeedbackController;
         import com.android.talkback.controller.GestureController;
@@ -41,7 +44,7 @@ package com.jc.gyromorse;
 /**
  * Manages detection of taps on the side of the device. Wraps IntegratedTapDetector.
  */
-public class TapManager extends BroadcastReceiver
+public class TapManager extends Activity
         implements IntegratedTapDetector.TapListener
 /*        , FeedbackController.HapticFeedbackListener,
         AccessibilityEventListener*/
@@ -69,17 +72,32 @@ public class TapManager extends BroadcastReceiver
     /* Class that deals with the hardware and calls us back with taps */
     private IntegratedTapDetector mIntegratedTapDetector;
 
+    public long stapcount=0;
+    public long dtapcount=0;
+
+    TextView xCoor; // declare X axis object
+    TextView yCoor; // declare Y axis object
+    TextView zCoor; // declare Z axis object
+
     //private final GestureController mGestureController;
 
     /**
      * @param context TalkBackService whose {@code performCustomGesture}
      * will be called when taps are detected
      */
-    public TapManager() {
+    public void onCreate(Bundle savedInstanceState) {
         //if (gestureController == null) throw new IllegalStateException();
         //mContext = context;
+
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        xCoor=(TextView)findViewById(R.id.xcoor); // create X axis object
+        yCoor=(TextView)findViewById(R.id.ycoor); // create Y axis object
+        zCoor=(TextView)findViewById(R.id.zcoor); // create Z axis object
+
         mIntegratedTapDetector = new IntegratedTapDetector(
-                (SensorManager) mContext.getSystemService(Context.SENSOR_SERVICE));
+                (SensorManager) mContext.getSystemService(SENSOR_SERVICE));
         mIntegratedTapDetector.addListener(this);
         mIntegratedTapDetector
                 .setPostDelayTimeMillis(MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS / MILIS_PER_NANO);
@@ -89,9 +107,9 @@ public class TapManager extends BroadcastReceiver
     /**
      * Stops tap detection.
      */
-    public void onSuspendInfrastructure() {
+/*    public void onSuspendInfrastructure() {
         mIntegratedTapDetector.stop();
-    }
+    }*/
 
     /**
      * Enables tap detection if appropriate based on preferences.
@@ -158,11 +176,11 @@ public class TapManager extends BroadcastReceiver
     /**
      * Called so we can avoid detecting screen touches as side taps.
      */
-    public void onAccessibilityEvent(AccessibilityEvent event) {
+/*    public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event.getEventType() == AccessibilityEventCompat.TYPE_TOUCH_INTERACTION_START) {
             mLastTouchTime = System.nanoTime();
         }
-    }
+    }*/
 
     /* Handle a single tap on the side of the device */
     @Override
@@ -179,6 +197,7 @@ public class TapManager extends BroadcastReceiver
                     mContext.getString(R.string.pref_shortcut_single_tap_default)));
         }
         */
+       stapcount++;
     }
 
     /* Handle a double tap on the side of the device */
@@ -195,6 +214,7 @@ public class TapManager extends BroadcastReceiver
                     mContext.getString(R.string.pref_shortcut_double_tap_key),
                     mContext.getString(R.string.pref_shortcut_double_tap_default)));
         }*/
+        dtapcount++;
     }
 
     /*
@@ -205,9 +225,9 @@ public class TapManager extends BroadcastReceiver
         mLastHapticTime = currentNanoTime;
     }*/
 
-    @Override
+    /*@Override
     public void onReceive(Context context, Intent intent) {
-        /*if (!TalkBackService.isServiceActive()) {
+        /f (!TalkBackService.isServiceActive()) {
             return;
         }
 
@@ -217,23 +237,23 @@ public class TapManager extends BroadcastReceiver
         }
         if (action.equals(Intent.ACTION_SCREEN_OFF)) {
             mIntegratedTapDetector.stop();
-        }*/
-    }
+        }
+    }*/
 
-    public static IntentFilter getFilter() {
+/*    public static IntentFilter getFilter() {
         IntentFilter filter = new IntentFilter();
         filter.addAction(Intent.ACTION_SCREEN_ON);
         filter.addAction(Intent.ACTION_SCREEN_OFF);
         return filter;
     }
 
-    /**
+    *//**
      * Permit tests to replace the tap detector to verify calls to it
      * @param itd new IntegratedTapDetector
-     */
+     *//*
     // Visible for testing
-    /* package */ void setIntegratedTapDetector(IntegratedTapDetector itd) {
+    *//* package *//* void setIntegratedTapDetector(IntegratedTapDetector itd) {
         mIntegratedTapDetector = itd;
-    }
+    }*/
 
 }

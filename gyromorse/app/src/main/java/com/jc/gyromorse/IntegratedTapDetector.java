@@ -52,6 +52,9 @@ package com.jc.gyromorse;
 public class IntegratedTapDetector implements SensorEventListener,
         ThreeDSensorTapDetector.TapListener {
 
+    private static final String TAG = "IntegratedTapDetector";
+
+
     private static final boolean DEBUG = false;
 
     /*
@@ -154,7 +157,7 @@ public class IntegratedTapDetector implements SensorEventListener,
     private long mMinTapSpacingNanos = DEFAULT_MIN_TAP_SPACING;
 
     /* Taps close enough together are double taps. A value of 0 disables double-tap detection */
-    private long mMaxDoubleTapSpacingNanos = 0;
+    private long mMaxDoubleTapSpacingNanos = 300*1000*1000;
 
     /* Amount to delay posting of messages, which is helpful for certain services */
     private long mPostDelayTime = 0;
@@ -354,6 +357,7 @@ public class IntegratedTapDetector implements SensorEventListener,
         switch (event.sensor.getType()) {
             case Sensor.TYPE_ACCELEROMETER:
                 onAccelerometerChanged(System.nanoTime(), event.values);
+
                 break;
             case Sensor.TYPE_GYROSCOPE:
                 onGyroscopeChanged(System.nanoTime(), event.values);

@@ -25,27 +25,23 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
 
-public class MainActivity extends Activity implements SensorEventListener{
+public class MainActivity extends Activity
+        implements IntegratedTapDetector.TapListener
 
-    private SensorManager sensorManager;
-    //FileSave mFile = null;
+{
+
+    private static final long MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS = 500 * 1000 * 1000;
+    private static final long MILIS_PER_NANO = 1000 * 1000;
 
 
     TextView xCoor; // declare X axis object
     TextView yCoor; // declare Y axis object
     TextView zCoor; // declare Z axis object
 
-    private FileWriter writer;
-    private FileOutputStream output;
 
-    private List<AccelerometerClass> accelerometerDataList;
-    private AccelerometerClass accelerometerData;
-
-    private DetectTap detecttap;
-
-    long curTime;
-    long diffTime;
-    long lastUpdate= System.currentTimeMillis();
+    public long mstapcount=0;
+    public long mdtapcount=0;
+    private IntegratedTapDetector mIntegratedTapDetector;
 
 
     @Override
@@ -57,145 +53,67 @@ public class MainActivity extends Activity implements SensorEventListener{
         yCoor=(TextView)findViewById(R.id.ycoor); // create Y axis object
         zCoor=(TextView)findViewById(R.id.zcoor); // create Z axis object
 
-        sensorManager=(SensorManager)getSystemService(SENSOR_SERVICE);
-        // add listener. The listener will be MyActivity (this) class
-        sensorManager.registerListener(this,
-                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
-                SensorManager.SENSOR_DELAY_FASTEST);
-
-        //copy from  //adding accelerometer data list values for the starting
-        this.accelerometerDataList = new ArrayList<AccelerometerClass>();
-
-        //adding accelerometer data list values for the starting
-        this.accelerometerDataList.add(new AccelerometerClass(0, 0, 0, 0, 0));
-        /////////////////////////////////////////////////////////////////////////////
-
-        //mFile = new FileSave("morse.txt", false);
+        mIntegratedTapDetector = new IntegratedTapDetector(
+                (SensorManager) this.getSystemService(SENSOR_SERVICE));
+        mIntegratedTapDetector.addListener(this);
+        mIntegratedTapDetector
+                .setPostDelayTimeMillis(MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS / MILIS_PER_NANO);
 
 
-        /*try {
-            File logFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"morsex.txt");
-            output = new FileOutputStream(logFile);
-            writer = new FileWriter(output.getFD());
-        }catch(Exception e){
-            e.printStackTrace();
-        }*/
-    }
+/*        // assign directions
+        float x=event.values[0];
+        float y=event.values[1];
+        float z=event.values[2];
 
-    // 当精度发生变化时调用
-    public void onAccuracyChanged(Sensor sensor,int accuracy){
+        xCoor.setText("X: "+x);
+        yCoor.setText("Y: "+y);
+        zCoor.setText("Z: "+z);*/
+        mIntegratedTapDetector.start();
+
 
     }
 
-    // 当sensor事件发生时候调用
-    public void onSensorChanged(SensorEvent event){
 
-        // check sensor type
-        if(event.sensor.getType()==Sensor.TYPE_ACCELEROMETER){
-
-            String currentDateTimeString = DateFormat.getDateTimeInstance().format(new Date()) + ": ";
-
-
-            // assign directions
-            float x=event.values[0];
-            float y=event.values[1];
-            float z=event.values[2];
-
-            xCoor.setText("X: "+x);
-            yCoor.setText("Y: "+y);
-            zCoor.setText("Z: "+z);
-
-
-            //String Content = currentDateTimeString  + " " + event.values[0] + " " + event.values[1] + " " + event.values[2];
-            //mFile.appendLog(Content);
-
-            //long tsLong = System.currentTimeMillis()/1000;
-            //recordAccelData(x, y, z, tsLong);
-
-            //calculating time lapse
-
-            this.accelerometerData = new AccelerometerClass();
-            this.accelerometerData.setxAxisValue(event.values[0]);
-            this.accelerometerData.setyAxisValue(event.values[1]);
-            this.accelerometerData.setzAxisValue(event.values[2]);
-            this.accelerometerData.setAccuracy(event.accuracy);
-
-            this.curTime = System.currentTimeMillis();
-            diffTime = (curTime - this.lastUpdate);
-            this.lastUpdate = curTime ;
-
-            //setting time lapse between consecutive datapoints
-            this.accelerometerData.setTimestamp(diffTime);
-
-            //adding the class to the list of accelerometer data points
-            this.accelerometerDataList.add(accelerometerData);
-
-
-        }
-    }
-
-    //method called when application is on pause
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        //unregistering sensor when application is on pause
-        //this is done to save battery
-        //mSensorManager.unregisterListener(this);
-
-        //saving data onto a file
-        //File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/accelerometerData.txt");
-        File myFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"gmorse.txt");
-
-        try {
-
-            myFile.createNewFile();
-            FileOutputStream fOut = new FileOutputStream(myFile);
-
-            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-            for(AccelerometerClass accel: this.accelerometerDataList) {
-                myOutWriter.append(String.valueOf(accel.getxAxisValue()));
-                myOutWriter.append('\t');
-                myOutWriter.append(String.valueOf(accel.getyAxisValue()));
-                myOutWriter.append('\t');
-                myOutWriter.append(String.valueOf(accel.getzAxisValue()));
-                myOutWriter.append('\t');
-                myOutWriter.append(String.valueOf(accel.getTimestamp()));
-                myOutWriter.append('\n');
-            }
-            myOutWriter.close();
-            fOut.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
-    protected void onDestroy() {
-        sensorManager.unregisterListener(this);
-        super.onDestroy();
-
-        //mFile.flushToLog();
-
-        /*try {
-            writer.close();
-            output.getFD().sync();
-            output.close();
-        } catch (Exception e){
-            e.printStackTrace();
-        }*/
-    }
-
-    public void recordAccelData(float x, float y, float z, Long tsLong){
-        String ts = tsLong.toString();
-        String accelLine = ts+", "+Float.toString(x)+", "+Float.toString(y)+", "+Float.toString(z)+"\n";
-        try {
-            writer.write(accelLine);
-            writer.flush();
-        } catch (Exception e) {
-            e.printStackTrace();
+    public void onSingleTap(long timeStamp) {
+       /* boolean talkBackActive = TalkBackService.isServiceActive();
+        boolean tapIsntFromScreenTouch =
+                (Math.abs(timeStamp - mLastTouchTime) > MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS);
+        boolean tapIsntFromHaptic =
+                (Math.abs(timeStamp - mLastHapticTime) > MIN_TIME_BETWEEN_HAPTIC_AND_TAP_NANOS);
+        if (talkBackActive && tapIsntFromScreenTouch && tapIsntFromHaptic) {
+            SharedPreferences prefs = SharedPreferencesUtils.getSharedPreferences(mContext);
+            mGestureController.performAction(prefs.getString(
+                    mContext.getString(R.string.pref_shortcut_single_tap_key),
+                    mContext.getString(R.string.pref_shortcut_single_tap_default)));
         }
+        */
+        mstapcount++;
+        xCoor.setText("X: "+mstapcount);
+
     }
+
+    /* Handle a double tap on the side of the device */
+    @Override
+    public void onDoubleTap(long timeStamp) {
+        /*boolean talkBackActive = TalkBackService.isServiceActive();
+        boolean tapIsntFromScreenTouch =
+                (Math.abs(timeStamp - mLastTouchTime) > MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS);
+        boolean tapIsntFromHaptic =
+                (Math.abs(timeStamp - mLastHapticTime) > MIN_TIME_BETWEEN_HAPTIC_AND_TAP_NANOS);
+        if (talkBackActive && tapIsntFromScreenTouch && tapIsntFromHaptic) {
+            SharedPreferences prefs = SharedPreferencesUtils.getSharedPreferences(mContext);
+            mGestureController.performAction(prefs.getString(
+                    mContext.getString(R.string.pref_shortcut_double_tap_key),
+                    mContext.getString(R.string.pref_shortcut_double_tap_default)));
+        }*/
+        mdtapcount++;
+        yCoor.setText("Y: "+mdtapcount);
+    }
+
+
+
 
 
 
