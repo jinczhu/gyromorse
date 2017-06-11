@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <CheckBoxPreference
+        android:key="autocap"
+        android:title="@string/autocap" 
+        android:summary="@string/autocap_summary"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+
+    <CheckBoxPreference
+        android:key="dashkeyonleft"
+        android:title="@string/dashkeyonleft"
+        android:summary="@string/dashkeyonleft_summary"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+
+    
+    <CheckBoxPreference 
+        android:key="enableutilkbd"
+        android:title="@string/enableutilkbd"
+        android:summary="@string/enableutilkbd_summary"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+
+    <CheckBoxPreference 
+        android:key="audio"
+        android:title="Enable audio"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+    
+    <CheckBoxPreference
+        android:key="audioonlyonheadphones"
+        android:title="Only on headphones"
+        android:defaultValue="true"
+        android:persistent="true"
+        android:dependency="audio" 
+    />
+
+    <CheckBoxPreference
+        android:key="iambic"
+        android:title="Iambic"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+    
+    <CheckBoxPreference
+        android:key="iambicmodeb"
+        android:title="Iambic Mode B"
+        android:defaultValue="false"
+        android:persistent="true"
+        android:dependency="iambic"
+    />
+    
+    <CheckBoxPreference
+        android:key="autocommit"
+        android:title="Autocommit code groups"
+        android:defaultValue="false"
+        android:persistent="true"
+    />
+    
+</PreferenceScreen>

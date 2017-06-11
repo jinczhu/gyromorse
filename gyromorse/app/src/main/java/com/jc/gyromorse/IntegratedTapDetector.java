@@ -208,6 +208,12 @@ public class IntegratedTapDetector implements SensorEventListener,
         mGyroTapDetector = gyroTapDetector;
     }
 
+    public void logdata()
+    {
+        mAccelTapDetector.logdata();
+    }
+
+
     /**
      * Choose desired tap detection method
      */
@@ -633,5 +639,8 @@ public class IntegratedTapDetector implements SensorEventListener,
             nanos = nanosInit;
         }
     }
+
+
+
 
 }

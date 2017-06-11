@@ -22,7 +22,17 @@ package com.jc.gyromorse;
 
         import android.util.Log;
 
+        import java.util.ArrayList;
         import java.util.LinkedList;
+        import java.util.List;
+
+        import java.io.File;
+        import java.io.FileOutputStream;
+        import java.io.IOException;
+        import java.io.OutputStreamWriter;
+        import android.os.Environment;
+
+
 
 
 /**
@@ -89,6 +99,12 @@ public class ThreeDSensorTapDetector {
 
     private ThreeDSensorTapDetectorType mDetectorType;
 
+    private List<AccelerometerClass> accelerometerDataList;
+    private AccelerometerClass accelerometerData;
+    long curTime;
+    long diffTime;
+    long lastUpdate= System.currentTimeMillis();
+
     /**
      * @param tapListener Receiver for tap updates
      * @param sensorMaxScale The maximum value available from the sensor (each axis)
@@ -102,6 +118,13 @@ public class ThreeDSensorTapDetector {
         mDetectorType = type;
         mLastTimestamp = 0;
         changeToNewCurrentState(0, SensorDetectorState.TOO_NOISY);
+
+
+        //copy from  //adding accelerometer data list values for the starting
+        this.accelerometerDataList = new ArrayList<AccelerometerClass>();
+
+        //adding accelerometer data list values for the starting
+        this.accelerometerDataList.add(new AccelerometerClass(0, 0, 0, 0, 0));
     }
 
     /** Call with updates from accelerometer sensor. Parameters are from the SensorEvent. */
@@ -126,6 +149,22 @@ public class ThreeDSensorTapDetector {
             mLastInput[i] = values[i];
             mLastConditionedMagnitudeSq += mLastFilterOutput[i] * mLastFilterOutput[i];
         }
+
+        this.accelerometerData = new AccelerometerClass();
+        this.accelerometerData.setxAxisValue(mLastFilterOutput[0]);
+        this.accelerometerData.setyAxisValue(mLastFilterOutput[1]);
+        this.accelerometerData.setzAxisValue(mLastFilterOutput[2]);
+        //this.accelerometerData.setAccuracy(event.accuracy);
+
+        this.curTime = timestamp;
+        diffTime = (curTime - this.lastUpdate);
+        this.lastUpdate = curTime ;
+
+        //setting time lapse between consecutive datapoints
+        this.accelerometerData.setTimestamp(diffTime);
+
+        //adding the class to the list of accelerometer data points
+        this.accelerometerDataList.add(accelerometerData);
 
         /*
          * Track the signal energy (for high-pass signal, nearly identical to variance) for the
@@ -174,6 +213,34 @@ public class ThreeDSensorTapDetector {
         }
     }
 
+    public void logdata()
+    {
+        //saving data onto a file
+        //File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/accelerometerData.txt");
+        File myFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"gmorse.txt");
+
+        try {
+
+            myFile.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(myFile);
+
+            OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
+            for(AccelerometerClass accel: this.accelerometerDataList) {
+                myOutWriter.append(String.valueOf(accel.getxAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getyAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getzAxisValue()));
+                myOutWriter.append('\t');
+                myOutWriter.append(String.valueOf(accel.getTimestamp()));
+                myOutWriter.append('\n');
+            }
+            myOutWriter.close();
+            fOut.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     // Visible for testing
     /* package */ float getConditionedSignalEnergy() {
         return mConditionedSignalEnergy;
