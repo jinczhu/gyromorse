@@ -1,8 +1,5 @@
 package com.jc.gyromorse;
 
-/**
- * Created by jc on 6/8/17.
- */
 
 /*
  * Copyright (C) 2015 Google Inc.
@@ -92,18 +89,35 @@ public class ThreeDSensorTapDetector {
             0f, 0f, 0f };
 
     private final LinkedList<EnergySamplePair> mEnergySamplesList;
+    private final LinkedList<InputSamplePair> mInputSamplesList;
+    private final LinkedList<OutputSamplePair> mOutputSamplesList;
+
 
     private long mLastTimestamp;
 
     private long mCandidateTapStart;
 
+    private int mfiltertype=0;
+
     private ThreeDSensorTapDetectorType mDetectorType;
 
     private List<AccelerometerClass> accelerometerDataList;
+    private List<AccelerometerClass> accelerometerDataListx;
+
+
     private AccelerometerClass accelerometerData;
     long curTime;
     long diffTime;
     long lastUpdate= System.currentTimeMillis();
+
+
+    private boolean madaptthsz=false;
+
+    private int tapcount=0;
+    private int dtapcount=0;
+
+    private TFClassifier classifier;
+
 
     /**
      * @param tapListener Receiver for tap updates
@@ -114,18 +128,26 @@ public class ThreeDSensorTapDetector {
                                    ThreeDSensorTapDetectorType type) {
         mLargestMagSq = NUMBER_OF_DIMENSIONS * sensorMaxScale * sensorMaxScale;
         mEnergySamplesList = new LinkedList<>();
+        mInputSamplesList = new LinkedList<>();
+        mOutputSamplesList = new LinkedList<>();
         mTapListener = tapListener;
         mDetectorType = type;
         mLastTimestamp = 0;
         changeToNewCurrentState(0, SensorDetectorState.TOO_NOISY);
 
+        //classifier = new TFClassifier(getApplicationContext());
+
 
         //copy from  //adding accelerometer data list values for the starting
         this.accelerometerDataList = new ArrayList<AccelerometerClass>();
 
+        Log.e("here", "x here");
+
         //adding accelerometer data list values for the starting
         this.accelerometerDataList.add(new AccelerometerClass(0, 0, 0, 0, 0));
     }
+
+
 
     /** Call with updates from accelerometer sensor. Parameters are from the SensorEvent. */
     public void onSensorChanged(long timestamp, float values[]) {
@@ -140,21 +162,53 @@ public class ThreeDSensorTapDetector {
         }
         mLastTimestamp = timestamp;
 
+        this.curTime = timestamp;
+        diffTime = (curTime - this.lastUpdate);
+        this.lastUpdate = curTime ;
+
         /* High-pass filter each component, sum the squared magnitude */
-        mLastConditionedMagnitudeSq = 0f;
-        for (int i = 0; i < NUMBER_OF_DIMENSIONS; ++i) {
-            mLastFilterOutput[i] = mDetectorType.filterNum[0] * values[i]
-                    + mDetectorType.filterNum[1] * mLastInput[i]
-                    - mDetectorType.filterDen[1] * mLastFilterOutput[i];
-            mLastInput[i] = values[i];
-            mLastConditionedMagnitudeSq += mLastFilterOutput[i] * mLastFilterOutput[i];
+        if (mfiltertype==1) {
+            mLastConditionedMagnitudeSq = 0f;
+            for (int i = 0; i < NUMBER_OF_DIMENSIONS; ++i) {
+                mLastFilterOutput[i] = mDetectorType.filterNum[0] * values[i]
+                        + mDetectorType.filterNum[1] * mLastInput[i]
+                        - mDetectorType.filterDen[1] * mLastFilterOutput[i];
+                mLastInput[i] = values[i];
+                mLastConditionedMagnitudeSq += mLastFilterOutput[i] * mLastFilterOutput[i];
+            }
+        }
+        //low-pass filter
+        if (mfiltertype==1)
+        {
+            float alpha=0;
+            mLastConditionedMagnitudeSq = 0f;
+            for (int i = 0; i < NUMBER_OF_DIMENSIONS; ++i) {
+                alpha=0.18f/(0.18f+diffTime);
+                mLastFilterOutput[i] =  alpha* mLastInput[i]+
+                (1-alpha)* mLastFilterOutput[i];
+                mLastInput[i] = values[i];
+                mLastConditionedMagnitudeSq += mLastFilterOutput[i] * mLastFilterOutput[i];
+            }
+        }
+
+        if (mfiltertype==2)
+        {
+            float alpha=0;
+            mLastConditionedMagnitudeSq = 0f;
+            for (int i = 0; i < NUMBER_OF_DIMENSIONS; ++i) {
+                alpha=0.1f/(0.1f+diffTime);
+                mLastFilterOutput[i] =  alpha* mLastInput[i]+
+                        (1-alpha)* mLastFilterOutput[i];
+                mLastInput[i] = values[i];
+                mLastConditionedMagnitudeSq += mLastFilterOutput[i] * mLastFilterOutput[i];
+            }
         }
 
         this.accelerometerData = new AccelerometerClass();
-        this.accelerometerData.setxAxisValue(mLastFilterOutput[0]);
+        this.accelerometerData.setxAxisValue(100);
         this.accelerometerData.setyAxisValue(mLastFilterOutput[1]);
         this.accelerometerData.setzAxisValue(mLastFilterOutput[2]);
-        //this.accelerometerData.setAccuracy(event.accuracy);
+        this.accelerometerData.setAccuracy(0);
 
         this.curTime = timestamp;
         diffTime = (curTime - this.lastUpdate);
@@ -177,6 +231,8 @@ public class ThreeDSensorTapDetector {
             mEnergySamplesList.removeFirst();
         }
 
+
+
         /* State machine for tap processing */
         if (DEBUG) {
             Log.v("threeDSensorTapDetector", String.format(
@@ -185,6 +241,22 @@ public class ThreeDSensorTapDetector {
                     mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit,
                     mLastConditionedMagnitudeSq));
         }
+
+        //check some statics for the duration of buf history
+        //mEnrgySamplesList
+        //mInputSampleslist
+        //mOutputSamplesList
+        mInputSamplesList.addLast(new InputSamplePair(timestamp, values));
+        while (mInputSamplesList.getFirst().mTime <= timestamp - ENERGY_HISTORY_LENGTH_NANOS) {
+            mInputSamplesList.removeFirst();
+        }
+
+        mOutputSamplesList.addLast(new OutputSamplePair(timestamp, values));
+        while (mOutputSamplesList.getFirst().mTime <= timestamp - ENERGY_HISTORY_LENGTH_NANOS) {
+            mOutputSamplesList.removeFirst();
+        }
+
+
 
         switch (mCurrentState) {
             case NO_TAP:
@@ -217,7 +289,7 @@ public class ThreeDSensorTapDetector {
     {
         //saving data onto a file
         //File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/accelerometerData.txt");
-        File myFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"gmorse.txt");
+        File myFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"gmorsex.txt");
 
         try {
 
@@ -225,7 +297,9 @@ public class ThreeDSensorTapDetector {
             FileOutputStream fOut = new FileOutputStream(myFile);
 
             OutputStreamWriter myOutWriter = new OutputStreamWriter(fOut);
-            for(AccelerometerClass accel: this.accelerometerDataList) {
+            this.accelerometerDataListx = new ArrayList<AccelerometerClass>(accelerometerDataList);
+            for(AccelerometerClass accel: this.accelerometerDataListx) {
+                //Log.e("err",String.valueOf(10));
                 myOutWriter.append(String.valueOf(accel.getxAxisValue()));
                 myOutWriter.append('\t');
                 myOutWriter.append(String.valueOf(accel.getyAxisValue()));
@@ -235,6 +309,8 @@ public class ThreeDSensorTapDetector {
                 myOutWriter.append(String.valueOf(accel.getTimestamp()));
                 myOutWriter.append('\n');
             }
+            accelerometerDataListx.clear();
+            accelerometerDataList.clear();
             myOutWriter.close();
             fOut.close();
         } catch (IOException e) {
@@ -451,4 +527,27 @@ public class ThreeDSensorTapDetector {
         }
     }
 
+    private class InputSamplePair {
+        public long mTime;
+
+        public float mValues[];
+
+        public InputSamplePair(long time, float values[]) {
+            mTime = time;
+            mValues = values;
+        }
+    }
+
+    private class OutputSamplePair {
+        public long mTime;
+
+        public float mValues[];
+
+        public OutputSamplePair(long time, float values[]) {
+            mTime = time;
+            mValues = values;
+        }
+    }
+
 }
+

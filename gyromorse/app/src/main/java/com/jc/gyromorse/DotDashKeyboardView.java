@@ -192,6 +192,7 @@ public class DotDashKeyboardView extends KeyboardView {
 							// If they swipe up off the keyboard, launch the
 							// cheat sheet
 							service.handleshift();
+							Log.e(TAG, "here here");
 							return true;
 						} else  {
 							final float absX = Math.abs(velocityX);
@@ -203,11 +204,16 @@ public class DotDashKeyboardView extends KeyboardView {
 							if (velocityX > mSwipeThreshold && absY < absX
 									&& deltaX > travelMin) {
 								//showCheatSheet();
+
 								service.handleSpace();
 								return true;
 							} else if (velocityX < -mSwipeThreshold
 									&& absY < absX && deltaX < -travelMin) {
-								service.handleBackspace();
+								//service.handleBackspace();
+								Log.e(TAG, "here 2here");
+
+								service.logdata();
+
 								return true;
 							}
 						}

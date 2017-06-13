@@ -100,7 +100,7 @@ public class DotDashIMEService extends InputMethodService implements
 	private IntegratedTapDetector mIntegratedTapDetector;
 
 	private static Timer sTimer = new Timer();
-	public static int CONVERT_DELAY_MILLIS = 700;
+	public static int CONVERT_DELAY_MILLIS = 1100;
 
 
 	@Override
@@ -733,5 +733,9 @@ public class DotDashIMEService extends InputMethodService implements
 			}
 		}, CONVERT_DELAY_MILLIS);
 
+	}
+
+	public void logdata(){
+		mIntegratedTapDetector.logdata();
 	}
 }

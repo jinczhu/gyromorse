@@ -158,6 +158,8 @@ public class IntegratedTapDetector implements SensorEventListener,
 
     /* Taps close enough together are double taps. A value of 0 disables double-tap detection */
     private long mMaxDoubleTapSpacingNanos = 300*1000*1000;
+    private long mMinDoubleTapSpacingNanos = 80*1000*1000;
+
 
     /* Amount to delay posting of messages, which is helpful for certain services */
     private long mPostDelayTime = 0;
@@ -172,7 +174,8 @@ public class IntegratedTapDetector implements SensorEventListener,
 
     // Visible for testing
     public IntegratedTapDetector(SensorManager sensorManager,
-                                 ThreeDSensorTapDetector accelTapDetector, ThreeDSensorTapDetector gyroTapDetector) {
+                                 ThreeDSensorTapDetector accelTapDetector,
+                                 ThreeDSensorTapDetector gyroTapDetector) {
         mSensorManager = sensorManager;
         // TODO: Determine the correct priority of this thread
         HandlerThread thread = new HandlerThread("AccelGyroAudioTapDetector", -20);
@@ -210,6 +213,7 @@ public class IntegratedTapDetector implements SensorEventListener,
 
     public void logdata()
     {
+
         mAccelTapDetector.logdata();
     }
 
@@ -325,6 +329,7 @@ public class IntegratedTapDetector implements SensorEventListener,
     /**
      * Process arrival of more audio data
      */
+    //jincao: we could add microphone as sensor for future
     public void onNewAudioData(long timestamp, byte audioData[]) {
     }
 
@@ -525,6 +530,8 @@ public class IntegratedTapDetector implements SensorEventListener,
      * tap may be left in the queue if insufficient time has elapsed to be sure it isn't a double
      * tap.
      */
+
+
     private void processIntegratedQueueAsSingleAndDoubleTaps(long timestamp) {
         while (mIntegratedTapEventQueue.size() >= 2) {
             Tap olderTap = mIntegratedTapEventQueue.remove();
@@ -537,7 +544,8 @@ public class IntegratedTapDetector implements SensorEventListener,
             }
 
             Tap newerTap = mIntegratedTapEventQueue.peek();
-            if (newerTap.nanos < olderTap.nanos + mMaxDoubleTapSpacingNanos) {
+            if (newerTap.nanos < olderTap.nanos + mMaxDoubleTapSpacingNanos &&
+                    newerTap.nanos < olderTap.nanos + mMinDoubleTapSpacingNanos) {
                 /*
                  * Taps are close enough together. Must have one tap above min single-tap quality,
                  * and the other above min double-tap quality
@@ -639,8 +647,6 @@ public class IntegratedTapDetector implements SensorEventListener,
             nanos = nanosInit;
         }
     }
-
-
 
 
 }
