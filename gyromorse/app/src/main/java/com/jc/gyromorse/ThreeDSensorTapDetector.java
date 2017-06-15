@@ -141,7 +141,7 @@ public class ThreeDSensorTapDetector {
         //copy from  //adding accelerometer data list values for the starting
         this.accelerometerDataList = new ArrayList<AccelerometerClass>();
 
-        Log.e("here", "x here");
+        //Log.e("here", "x here");
 
         //adding accelerometer data list values for the starting
         this.accelerometerDataList.add(new AccelerometerClass(0, 0, 0, 0, 0));
@@ -236,7 +236,7 @@ public class ThreeDSensorTapDetector {
         /* State machine for tap processing */
         //if (DEBUG)
         {
-            Log.e("threeDSensorTapDetector", String.format(
+            Log.v("threeDSensorTapDetector", String.format(
                     "State %s, CurrentEnergy %f, size %d, limit %f, signal %f",
                     mCurrentState.name(), mConditionedSignalEnergy, mEnergySamplesList.size(),
                     mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit,
@@ -345,7 +345,7 @@ public class ThreeDSensorTapDetector {
             mCandidateTapStart = timestamp;
         } else if (mConditionedSignalEnergy
                 > mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit) {
-            Log.e("toonoise", String.format(
+            Log.v("toonoise", String.format(
                     "State %s, CurrentEnergy %f, size %d, limit %f, signal %f",
                     mCurrentState.name(), mConditionedSignalEnergy, mEnergySamplesList.size(),
                     mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit,
@@ -415,7 +415,7 @@ public class ThreeDSensorTapDetector {
        if (mLastConditionedMagnitudeSq > envelope) {
             //if (DEBUG)
             {
-                Log.e("here", String.format(
+                Log.v("here", String.format(
                         "Tap downgraded to noise at %d. Signal %f limit %f", timestamp,
                         mLastConditionedMagnitudeSq, envelope));
             }
@@ -436,7 +436,7 @@ public class ThreeDSensorTapDetector {
      */
     private void stateMachineTooNoisy(long timestamp) {
 
-        Log.e("tapdetector", "noise");
+        //Log.e("tapdetector", "noise");
 
 
         /* Stay in this state until we have enough history to judge the signal */

@@ -47,6 +47,8 @@ private float gravity[]={0f,0f,0f};
     private float mEnergy;
 
     private long gaptime;
+    private long mgaptime;
+
 
     private float NoisEPerSample;
 
@@ -92,8 +94,8 @@ private float gravity[]={0f,0f,0f};
         mstate=TapState.NOTAP;
         bufflength = 100 * 1000 * 1000;
 
-        gaptime =300*1000*1000;
-        gaptime =80*1000*1000;
+        gaptime =400*1000*1000;
+        mgaptime =80*1000*1000;
 
 
         evwidth = 60 * 1000 * 1000;
@@ -172,9 +174,11 @@ private float gravity[]={0f,0f,0f};
         if (mFTapTime>0 /*&& curTime-mFTapTime>gaptime && (mstate==TapState.NOTAP|| mstate==TapState.NOISE)*/)
         {
             Log.e("tapdetector", String.format("here2  %d %d", gaptime, curTime-mFTapTime));
-            if(curTime-mFTapTime>gaptime && curTime-mFTapTime<mgaptime)
+            if(curTime-mFTapTime>gaptime )
             {
-            mTListener.onSTap(curTime);
+                Log.e("tapdetector", String.format("here3  %d %d", gaptime, curTime-mFTapTime));
+
+                mTListener.onSTap(curTime);
             mFTapTime=0;}
         }
 
@@ -216,12 +220,12 @@ private float gravity[]={0f,0f,0f};
 
                     updateshsz();
 
-                    Log.e("tapdetector", String.format("here  %d", mFTapTime));
+                    Log.e("tapdetector", String.format("detected here  %d", mFTapTime));
 
 
                     if (mFTapTime == 0) {
                         mFTapTime = curTime;
-                    } else {
+                    } else if(curTime-mFTapTime>mgaptime){
                         mSTapTime = curTime;
                         mTListener.onDTap(curTime);
                         mFTapTime=0;
@@ -310,12 +314,6 @@ private float gravity[]={0f,0f,0f};
         TAPBG
     }
 
-    private class envelop {
-        public float peak;
-        public float peakt;
-
-
-    }
 
     private class EnergySamplePair {
         public long mTime;
