@@ -12,6 +12,7 @@ import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -24,6 +25,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class DotDashIMEService extends InputMethodService implements
+		TapDetector.TListener,
 		IntegratedTapDetector.TapListener, KeyboardView.OnKeyboardActionListener, OnSharedPreferenceChangeListener {
 
 	public int keycode;
@@ -97,11 +99,10 @@ public class DotDashIMEService extends InputMethodService implements
 
 	private static final long MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS = 500 * 1000 * 1000;
 	private static final long MILIS_PER_NANO = 1000 * 1000;
-	private IntegratedTapDetector mIntegratedTapDetector;
+	private IntegratedTapDetector mIntegratedTapDetector;	private static Timer sTimer = new Timer();
+	public static int CONVERT_DELAY_MILLIS = 800;
 
-	private static Timer sTimer = new Timer();
-	public static int CONVERT_DELAY_MILLIS = 1100;
-
+	private TapDetector mtapdetector;
 
 	@Override
 	public void onCreate() {
@@ -119,10 +120,14 @@ public class DotDashIMEService extends InputMethodService implements
 
 		mIntegratedTapDetector = new IntegratedTapDetector(
 				(SensorManager) this.getSystemService(SENSOR_SERVICE));
-		mIntegratedTapDetector.addListener(this);
+		//mIntegratedTapDetector.addListener(this);
 		mIntegratedTapDetector
 				.setPostDelayTimeMillis(MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS / MILIS_PER_NANO);
 		mIntegratedTapDetector.start();
+
+		mtapdetector = new TapDetector(this, (SensorManager) this.getSystemService(SENSOR_SERVICE));
+		//mtapdetector.addListener(this);
+		//mtapdetector.start();
 
 		// TODO Replace this with an XML file
 		morseMap = new Hashtable<String, String>();
@@ -708,6 +713,7 @@ public class DotDashIMEService extends InputMethodService implements
 
 	@Override
 	public void onSingleTap(long timeStamp) {
+		sTimer.cancel();
 		handledotkey();
 
 		sTimer = new Timer();
@@ -723,6 +729,7 @@ public class DotDashIMEService extends InputMethodService implements
 	/* Handle a double tap on the side of the device */
 	@Override
 	public void onDoubleTap(long timeStamp) {
+		sTimer.cancel();
 		handledashkey();
 
 		sTimer = new Timer();
@@ -738,4 +745,34 @@ public class DotDashIMEService extends InputMethodService implements
 	public void logdata(){
 		mIntegratedTapDetector.logdata();
 	}
+
+    public void onSTap(long timeStamp) {
+        sTimer.cancel();
+        handledotkey();
+
+        sTimer = new Timer();
+        sTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                handleSpace();
+            }
+        }, CONVERT_DELAY_MILLIS);
+
+    }
+
+    /* Handle a double tap on the side of the device */
+    @Override
+    public void onDTap(long timeStamp) {
+        sTimer.cancel();
+        handledashkey();
+
+        sTimer = new Timer();
+        sTimer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                handleSpace();
+            }
+        }, CONVERT_DELAY_MILLIS);
+
+    }
 }

@@ -167,7 +167,7 @@ public class ThreeDSensorTapDetector {
         this.lastUpdate = curTime ;
 
         /* High-pass filter each component, sum the squared magnitude */
-        if (mfiltertype==1) {
+        if (mfiltertype==0) {
             mLastConditionedMagnitudeSq = 0f;
             for (int i = 0; i < NUMBER_OF_DIMENSIONS; ++i) {
                 mLastFilterOutput[i] = mDetectorType.filterNum[0] * values[i]
@@ -234,8 +234,9 @@ public class ThreeDSensorTapDetector {
 
 
         /* State machine for tap processing */
-        if (DEBUG) {
-            Log.v("threeDSensorTapDetector", String.format(
+        //if (DEBUG)
+        {
+            Log.e("threeDSensorTapDetector", String.format(
                     "State %s, CurrentEnergy %f, size %d, limit %f, signal %f",
                     mCurrentState.name(), mConditionedSignalEnergy, mEnergySamplesList.size(),
                     mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit,
@@ -344,6 +345,11 @@ public class ThreeDSensorTapDetector {
             mCandidateTapStart = timestamp;
         } else if (mConditionedSignalEnergy
                 > mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit) {
+            Log.e("toonoise", String.format(
+                    "State %s, CurrentEnergy %f, size %d, limit %f, signal %f",
+                    mCurrentState.name(), mConditionedSignalEnergy, mEnergySamplesList.size(),
+                    mEnergySamplesList.size() * mDetectorType.energyPerSampleNoiseLimit,
+                    mLastConditionedMagnitudeSq));
             changeToNewCurrentState(timestamp, SensorDetectorState.TOO_NOISY);
         }
     }
@@ -406,9 +412,10 @@ public class ThreeDSensorTapDetector {
         /* Force envelope to be at least lowLevel */
         envelope = Math.max(envelope, mDetectorType.possibleTapsLowLevel);
 
-        if (mLastConditionedMagnitudeSq > envelope) {
-            if (DEBUG) {
-                Log.v("threeDSensorTapDetector", String.format(
+       if (mLastConditionedMagnitudeSq > envelope) {
+            //if (DEBUG)
+            {
+                Log.e("here", String.format(
                         "Tap downgraded to noise at %d. Signal %f limit %f", timestamp,
                         mLastConditionedMagnitudeSq, envelope));
             }
@@ -428,6 +435,9 @@ public class ThreeDSensorTapDetector {
      * level.
      */
     private void stateMachineTooNoisy(long timestamp) {
+
+        Log.e("tapdetector", "noise");
+
 
         /* Stay in this state until we have enough history to judge the signal */
         long timeSpanInHistoryNanos = mEnergySamplesList.getLast().mTime

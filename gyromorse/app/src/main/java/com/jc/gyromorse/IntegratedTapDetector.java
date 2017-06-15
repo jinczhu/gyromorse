@@ -157,8 +157,8 @@ public class IntegratedTapDetector implements SensorEventListener,
     private long mMinTapSpacingNanos = DEFAULT_MIN_TAP_SPACING;
 
     /* Taps close enough together are double taps. A value of 0 disables double-tap detection */
-    private long mMaxDoubleTapSpacingNanos = 300*1000*1000;
-    private long mMinDoubleTapSpacingNanos = 80*1000*1000;
+    private long mMaxDoubleTapSpacingNanos = 400*1000*1000;
+    private long mMinDoubleTapSpacingNanos = 100*1000*1000;
 
 
     /* Amount to delay posting of messages, which is helpful for certain services */
@@ -182,7 +182,7 @@ public class IntegratedTapDetector implements SensorEventListener,
         thread.start();
         mHandler = new Handler(thread.getLooper());
         mHaveReportedAtLeastOneTap = false;
-        mMinTapQuality = TAP_QUALITY_HIGH;
+        mMinTapQuality = TAP_QUALITY_LOW;
         mMinDoubleTapQuality = TAP_QUALITY_LOW;
 
         if (accelTapDetector == null) {
@@ -545,7 +545,7 @@ public class IntegratedTapDetector implements SensorEventListener,
 
             Tap newerTap = mIntegratedTapEventQueue.peek();
             if (newerTap.nanos < olderTap.nanos + mMaxDoubleTapSpacingNanos &&
-                    newerTap.nanos < olderTap.nanos + mMinDoubleTapSpacingNanos) {
+                    newerTap.nanos > olderTap.nanos + mMinDoubleTapSpacingNanos) {
                 /*
                  * Taps are close enough together. Must have one tap above min single-tap quality,
                  * and the other above min double-tap quality

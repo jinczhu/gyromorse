@@ -209,10 +209,10 @@ public class DotDashKeyboardView extends KeyboardView {
 								return true;
 							} else if (velocityX < -mSwipeThreshold
 									&& absY < absX && deltaX < -travelMin) {
-								//service.handleBackspace();
+								service.handleBackspace();
 								Log.e(TAG, "here 2here");
 
-								service.logdata();
+								//service.logdata();
 
 								return true;
 							}

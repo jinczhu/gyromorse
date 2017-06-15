@@ -4,8 +4,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.util.Log;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 /**
  * Created by jc on 6/12/17.
@@ -19,9 +24,11 @@ private float gravity[]={0f,0f,0f};
 
     private long bufflength;
 
+    private  TListener mTListener;
+
     long curTime;
     long diffTime;
-    long lastUpdate= System.currentTimeMillis();
+    long lastUpdate= System.nanoTime();
 
     private  LinkedList<TapDetector.EnergySamplePair> mEnergySamplesList;
     private  LinkedList<TapDetector.InputSamplePair> mInputSamplesList;
@@ -50,32 +57,71 @@ private float gravity[]={0f,0f,0f};
 
     private float NoisEPerSampl;
 
-    private SensorManager sensorManager;
+    //private final Handler mHandler;
+    //private final Map<TapDetector.TListener, Handler> mListenerMap = new HashMap<>();
+    private final SensorManager mSensorManager;
 
-    public void TapDetector(SensorManager sensorManager)
+
+    //private SensorManager sensorManager;
+
+    public TapDetector(TapDetector.TListener tListener, SensorManager sensorManager)
     {
+        mSensorManager = sensorManager;
 
-        Sensor accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        Sensor accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        //HandlerThread thread = new HandlerThread("TapDetector");
+        //thread.start();
+        //mHandler = new Handler(thread.getLooper());
+
+        mSensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_FASTEST);
+
         float maxRange = accelerometer.getMaximumRange();
 
+        mTListener=tListener;
 
         maxMsq   = 3 * maxRange * maxRange;
 
 
         mInputSamplesList = new LinkedList<>();
         mOutputSamplesList = new LinkedList<>();
+        mEnergySamplesList = new LinkedList<>();
+
 
         mstate=TapState.NOTAP;
         bufflength = 100 * 1000 * 1000;
 
         gaptime =300*1000*1000;
+        gaptime =80*1000*1000;
+
 
         evwidth = 60 * 1000 * 1000;
-        taplowMsq = 2f;
-        NoisEPerSampl =1f;
+        taplowMsq = 1f;
+        NoisEPerSample =1f;
 
     }
 
+  /*  void addListener(TapDetector.TListener listener, Handler handler) {
+        synchronized (mListenerMap) {
+            mListenerMap.put(listener, handler);
+        }
+    }
+
+    *//**
+     * Add a listener on the current thread.
+     *//*
+    public void addListener(TapDetector.TListener listener) {
+        addListener(listener, new Handler());
+    }*/
+
+ /*   public void start() {
+        Sensor accelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mSensorManager.registerListener(
+                this, accelerometer, SensorManager.SENSOR_DELAY_FASTEST, mHandler);
+
+    }
+*/
     public void onAccuracyChanged(Sensor sensor,int accuracy){
 
     }
@@ -83,14 +129,18 @@ private float gravity[]={0f,0f,0f};
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        this.curTime = System.currentTimeMillis();
+        //this.curTime = System.currentTimeMillis();
+        this.curTime =System.nanoTime();
         diffTime = (curTime - this.lastUpdate);
         this.lastUpdate = curTime ;
 
+        //Log.e("tapdetector", "here 2here");
+
+
         // assign directions
-        float x=event.values[0];
-        float y=event.values[1];
-        float z=event.values[2];
+        float x=event.values[0]*5f;
+        float y=event.values[1]*5f;
+        float z=event.values[2]*5f;
 
         float[] values=highPass(x,y,z);
 
@@ -100,14 +150,14 @@ private float gravity[]={0f,0f,0f};
             mOutputSamplesList.removeFirst();
         }
 
-        float mMsq=0f;
+       float mMsq=0f;
         for (int i = 0; i < 3; ++i) {
             mMsq += values[i] * values[i];
         }
 
         mEnergy += mMsq;
 
-        mEnergySamplesList.addLast(new TapDetector.EnergySamplePair(curTime, mMsq));
+       mEnergySamplesList.addLast(new EnergySamplePair(curTime, mMsq));
         while (mEnergySamplesList.getFirst().mTime <= curTime - bufflength) {
             mEnergy -= mEnergySamplesList.getFirst().mValue;
             mEnergySamplesList.removeFirst();
@@ -119,16 +169,26 @@ private float gravity[]={0f,0f,0f};
 
 
 
-        if (mFTapTime-curTime>gaptime && (mstate==TapState.NOTAP|| mstate==TapState.NOISE))
+        if (mFTapTime>0 /*&& curTime-mFTapTime>gaptime && (mstate==TapState.NOTAP|| mstate==TapState.NOISE)*/)
         {
-
-            //sendSigleTap;
+            Log.e("tapdetector", String.format("here2  %d %d", gaptime, curTime-mFTapTime));
+            if(curTime-mFTapTime>gaptime && curTime-mFTapTime<mgaptime)
+            {
+            mTListener.onSTap(curTime);
+            mFTapTime=0;}
         }
 
-        float NoisE=mInputSamplesList.size() * NoisEPerSample;
+        float NoisE=(float)mEnergySamplesList.size() * NoisEPerSample;
+
+ /*       if (mMsq > taplowMsq) {
+            Log.e("tapdetector", String.format("here 2here msg %f, %f， %s, %f", (float)mInputSamplesList.size(), mEnergy, mstate.name(),NoisE));
+        }*/
 
         if (mstate==TapState.NOTAP) {
-            if (mMsq > taplowMsq*3) {
+            //Log.e("tapdetector", String.format("here 2here msg %f", mMsq));
+
+            if (mMsq > taplowMsq) {
+
                 if (mEnergy>NoisE)
                 {
                     mstate=TapState.NOISE;
@@ -151,16 +211,20 @@ private float gravity[]={0f,0f,0f};
                   if(curTime >evwidth)
                 {
                     //tap detected
-                    mstate = TapState.NOISE;
+                    mstate = TapState.NOTAP;
 
 
                     updateshsz();
+
+                    Log.e("tapdetector", String.format("here  %d", mFTapTime));
+
 
                     if (mFTapTime == 0) {
                         mFTapTime = curTime;
                     } else {
                         mSTapTime = curTime;
-                        //sendDoubleTap;
+                        mTListener.onDTap(curTime);
+                        mFTapTime=0;
                     }
                 }
                 if(mMsq<tapbgth_this){
@@ -183,7 +247,8 @@ private float gravity[]={0f,0f,0f};
     private void updateshsz(){
 
         //evwidth;
-        //taplowMsq
+        float a=0.1f;
+        taplowMsq = a * tapbgth_this+ (1-a) * taplowMsq;
 
         NoisEPerSample = Math.min(tapbgth_this*0.7f, NoisEPerSample);
     }
@@ -261,5 +326,13 @@ private float gravity[]={0f,0f,0f};
             mTime = time;
             mValue = value;
         }
+    }
+
+    public interface TListener {
+        // Invoked when tap occurs
+        void onSTap(long timestampNanos);
+
+        // Invoked on double-tap
+        void onDTap(long timestampNanos);
     }
 }

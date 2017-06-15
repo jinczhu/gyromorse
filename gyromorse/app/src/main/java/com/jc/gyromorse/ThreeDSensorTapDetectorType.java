@@ -31,8 +31,8 @@ public enum ThreeDSensorTapDetectorType {
     ACCELEROMETER(
             new float[] {0.8f, -0.8f} /* filterNum */,
             new float[] {1.0f, -0.8f} /* filterDen */,
-            1.0f /* energyPerSampleNoiseLimit */,
-            5f /* multipleOfNoiseForPossibleTap */,
+            0.6f /* energyPerSampleNoiseLimit */,
+            0.5f /* multipleOfNoiseForPossibleTap */,
             30 * 1000 * 1000 /* definiteTapsHighAmplitudeTimeNanos */,
             40 * 1000 * 1000 /* possibleTapsHighAmplitudeTimeNanos */,
             70 * 1000 * 1000 /* definiteTapsFallTimeNanos */,
