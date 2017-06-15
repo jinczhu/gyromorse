@@ -56,6 +56,7 @@ private float gravity[]={0f,0f,0f};
 
     private float tapbgth_this;
     private float evwidth_this;
+    private float tapNoise_this;
 
     private float NoisEPerSampl;
 
@@ -101,6 +102,7 @@ private float gravity[]={0f,0f,0f};
         evwidth = 60 * 1000 * 1000;
         taplowMsq = 1f;
         NoisEPerSample =1f;
+        tapbgth_this = 1f;
 
     }
 
@@ -173,10 +175,10 @@ private float gravity[]={0f,0f,0f};
 
         if (mFTapTime>0 /*&& curTime-mFTapTime>gaptime && (mstate==TapState.NOTAP|| mstate==TapState.NOISE)*/)
         {
-            Log.e("tapdetector", String.format("here2  %d %d", gaptime, curTime-mFTapTime));
+            //Log.e("tapdetector", String.format("here2  %d %d", gaptime, curTime-mFTapTime));
             if(curTime-mFTapTime>gaptime )
             {
-                Log.e("tapdetector", String.format("here3  %d %d", gaptime, curTime-mFTapTime));
+               // Log.e("tapdetector", String.format("here3  %d %d", gaptime, curTime-mFTapTime));
 
                 mTListener.onSTap(curTime);
             mFTapTime=0;}
@@ -184,15 +186,16 @@ private float gravity[]={0f,0f,0f};
 
         float NoisE=(float)mEnergySamplesList.size() * NoisEPerSample;
 
- /*       if (mMsq > taplowMsq) {
-            Log.e("tapdetector", String.format("here 2here msg %f, %f， %s, %f", (float)mInputSamplesList.size(), mEnergy, mstate.name(),NoisE));
-        }*/
+   //      if (mMsq > taplowMsq) {
+            Log.e("tapdetector", String.format("values:  %s msq %f/%f，%f,, %f",mstate.name(), mMsq, taplowMsq ,mEnergy, NoisE));
+   //     }*/
 
         if (mstate==TapState.NOTAP) {
             //Log.e("tapdetector", String.format("here 2here msg %f", mMsq));
 
             if (mMsq > taplowMsq) {
-
+               // Log.e("tapdetector", String.format("notap mMsq %f, %f, %f, %f", mMsq, taplowMsq, mEnergy, NoisE));
+                //mEnergy=mEnergy-mMsq;
                 if (mEnergy>NoisE)
                 {
                     mstate=TapState.NOISE;
@@ -201,7 +204,6 @@ private float gravity[]={0f,0f,0f};
                     mTStime=curTime;
 
                     tapbgth_this=mMsq;
-
                 }
 
             }
@@ -220,7 +222,7 @@ private float gravity[]={0f,0f,0f};
 
                     updateshsz();
 
-                    Log.e("tapdetector", String.format("detected here  %d", mFTapTime));
+                   // Log.e("tapdetector", String.format("detected here  %d", mFTapTime));
 
 
                     if (mFTapTime == 0) {
@@ -241,7 +243,7 @@ private float gravity[]={0f,0f,0f};
             {
                 mstate=TapState.NOTAP;
             }
-
+            tapNoise_this= NoisE/ mEnergySamplesList.size();
 
         }
 
@@ -251,10 +253,13 @@ private float gravity[]={0f,0f,0f};
     private void updateshsz(){
 
         //evwidth;
-        float a=0.1f;
-        taplowMsq = a * tapbgth_this+ (1-a) * taplowMsq;
+        float a=0.3f;
+        taplowMsq = Math.max(a * tapbgth_this, 0.5f);
 
-        NoisEPerSample = Math.min(tapbgth_this*0.7f, NoisEPerSample);
+        //NoisEPerSample = Math.max(tapbgth_this*0.8f, NoisEPerSample);
+
+        tapbgth_this=0;
+
     }
 
   /*  private float[] calibration(long timeStamp,  double values[]) {
