@@ -96,7 +96,7 @@ private float gravity[]={0f,0f,0f};
         bufflength = 100 * 1000 * 1000;
 
         gaptime =400*1000*1000;
-        mgaptime =80*1000*1000;
+        mgaptime =100*1000*1000;
 
 
         evwidth = 60 * 1000 * 1000;
@@ -169,7 +169,7 @@ private float gravity[]={0f,0f,0f};
 
         float yy = taplowMsq;
 
-        float envelope = maxMsq + (yy - maxMsq) * ((float) curTime - mTStime+evwidth/2) / evwidth;
+        float envelope = maxMsq + (taplowMsq/2+ yy - maxMsq) * ((float) curTime - mTStime-evwidth/3) / evwidth;
 
 
 
@@ -187,7 +187,7 @@ private float gravity[]={0f,0f,0f};
         float NoisE=(float)mEnergySamplesList.size() * NoisEPerSample;
 
    //      if (mMsq > taplowMsq) {
-            Log.e("tapdetector", String.format("values:  %s msq %f/%f，%f,, %f",mstate.name(), mMsq, taplowMsq ,mEnergy, NoisE));
+            //Log.e("tapdetector", String.format("values:  %s msq %f/%f，%f,, %f",mstate.name(), mMsq, taplowMsq ,mEnergy, NoisE));
    //     }*/
 
         if (mstate==TapState.NOTAP) {
@@ -210,11 +210,21 @@ private float gravity[]={0f,0f,0f};
         }
         else if(mstate==TapState.TAPBG)
         {
+
+
             if (mMsq > envelope) {
                 mstate=TapState.NOTAP;
+
+               // float envelope = maxMsq + (yy - maxMsq) * ((float) curTime - mTStime+evwidth/2) / evwidth;
+                Log.e("tapdetector", String.format(" after2 tapbg %f %f %f", maxMsq, yy, ((float) curTime - mTStime) / evwidth));
+
+                Log.e("tapdetector", String.format(" after1 tapbg %f/%f/%f  %d  %d", mMsq, taplowMsq, envelope,  evwidth, curTime-mTStime));
+
             }
             else {
-                  if(curTime >evwidth)
+                Log.e("tapdetector", String.format(" after tapbg %f/%f  %d  %d", mMsq, taplowMsq,  evwidth, curTime-mTStime));
+
+                if(curTime-mTStime >evwidth)
                 {
                     //tap detected
                     mstate = TapState.NOTAP;
@@ -222,7 +232,8 @@ private float gravity[]={0f,0f,0f};
 
                     updateshsz();
 
-                   // Log.e("tapdetector", String.format("detected here  %d", mFTapTime));
+                    Log.e("tapdetector", String.format("detected here %f/%f  %d-%d  %d", mMsq, taplowMsq, mFTapTime, curTime, curTime-mFTapTime));
+                   // Log.e("tapdetector", String.format("values:  %s msq %f/%f，%f,, %f",mstate.name(), mMsq, taplowMsq ,mEnergy, NoisE));
 
 
                     if (mFTapTime == 0) {
