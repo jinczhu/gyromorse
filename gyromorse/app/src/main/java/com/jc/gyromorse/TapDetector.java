@@ -100,7 +100,7 @@ private float gravity[]={0f,0f,0f};
 
 
         evwidth = 60 * 1000 * 1000;
-        taplowMsq = 1f;
+        taplowMsq = 0.08f;
         NoisEPerSample =1f;
         tapbgth_this = 1f;
 
@@ -149,6 +149,7 @@ private float gravity[]={0f,0f,0f};
         float[] values=highPass(x,y,z);
 
 
+
         mOutputSamplesList.addLast(new OutputSamplePair(curTime, values));
         while (mOutputSamplesList.getFirst().mTime <= curTime - bufflength) {
             mOutputSamplesList.removeFirst();
@@ -167,9 +168,12 @@ private float gravity[]={0f,0f,0f};
             mEnergySamplesList.removeFirst();
         }
 
+
+
         float yy = taplowMsq;
 
         float envelope = maxMsq + (taplowMsq/2+ yy - maxMsq) * ((float) curTime - mTStime-evwidth/3) / evwidth;
+
 
 
 
@@ -194,7 +198,7 @@ private float gravity[]={0f,0f,0f};
             //Log.e("tapdetector", String.format("here 2here msg %f", mMsq));
 
             if (mMsq > taplowMsq) {
-               // Log.e("tapdetector", String.format("notap mMsq %f, %f, %f, %f", mMsq, taplowMsq, mEnergy, NoisE));
+                Log.e("tapdetector", String.format("notap mMsq %f, %f, %f, %f", mMsq, taplowMsq, mEnergy, NoisE));
                 //mEnergy=mEnergy-mMsq;
                 if (mEnergy>NoisE)
                 {
@@ -204,6 +208,7 @@ private float gravity[]={0f,0f,0f};
                     mTStime=curTime;
 
                     tapbgth_this=mMsq;
+
                 }
 
             }
@@ -216,10 +221,11 @@ private float gravity[]={0f,0f,0f};
                 mstate=TapState.NOTAP;
 
                // float envelope = maxMsq + (yy - maxMsq) * ((float) curTime - mTStime+evwidth/2) / evwidth;
-                Log.e("tapdetector", String.format(" after2 tapbg %f %f %f", maxMsq, yy, ((float) curTime - mTStime) / evwidth));
+                //Log.e("tapdetector", String.format(" after2 tapbg %f %f %f", maxMsq, yy, ((float) curTime - mTStime) / evwidth));
 
-                Log.e("tapdetector", String.format(" after1 tapbg %f/%f/%f  %d  %d", mMsq, taplowMsq, envelope,  evwidth, curTime-mTStime));
-
+                //Log.e("tapdetector", String.format(" after1 tapbg %f/%f/%f  %d  %d", mMsq, taplowMsq, envelope,  evwidth, curTime-mTStime));
+                Log.e("tapdetector", String.format("log,  %f/%f, %f, %f, %f",
+                        mMsq, taplowMsq, envelope, mEnergy, NoisE));
             }
             else {
                 Log.e("tapdetector", String.format(" after tapbg %f/%f  %d  %d", mMsq, taplowMsq,  evwidth, curTime-mTStime));
@@ -232,7 +238,7 @@ private float gravity[]={0f,0f,0f};
 
                     updateshsz();
 
-                    Log.e("tapdetector", String.format("detected here %f/%f  %d-%d  %d", mMsq, taplowMsq, mFTapTime, curTime, curTime-mFTapTime));
+                   // Log.e("tapdetector", String.format("detected here %f/%f  %d-%d  %d", mMsq, taplowMsq, mFTapTime, curTime, curTime-mFTapTime));
                    // Log.e("tapdetector", String.format("values:  %s msq %f/%f，%f,, %f",mstate.name(), mMsq, taplowMsq ,mEnergy, NoisE));
 
 
@@ -248,6 +254,7 @@ private float gravity[]={0f,0f,0f};
                     //evwidth_this=curTime-mTStime;
                 }
             }
+
         }else if(mstate==TapState.NOISE)
         {
             if (mEnergy<NoisE)
@@ -265,7 +272,7 @@ private float gravity[]={0f,0f,0f};
 
         //evwidth;
         float a=0.3f;
-        taplowMsq = Math.max(a * tapbgth_this, 0.5f);
+        taplowMsq = Math.min( Math.max( a * tapbgth_this, 0.03f), 0.5f);
 
         //NoisEPerSample = Math.max(tapbgth_this*0.8f, NoisEPerSample);
 

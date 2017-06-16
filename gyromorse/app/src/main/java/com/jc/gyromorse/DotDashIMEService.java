@@ -100,7 +100,7 @@ public class DotDashIMEService extends InputMethodService implements
 	private static final long MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS = 500 * 1000 * 1000;
 	private static final long MILIS_PER_NANO = 1000 * 1000;
 	private IntegratedTapDetector mIntegratedTapDetector;	private static Timer sTimer = new Timer();
-	public static int CONVERT_DELAY_MILLIS = 800;
+	public static int CONVERT_DELAY_MILLIS = 700;
 
 	private TapDetector mtapdetector;
 
@@ -123,7 +123,7 @@ public class DotDashIMEService extends InputMethodService implements
 		//mIntegratedTapDetector.addListener(this);
 		mIntegratedTapDetector
 				.setPostDelayTimeMillis(MIN_TIME_BETWEEN_TOUCH_AND_TAP_NANOS / MILIS_PER_NANO);
-		mIntegratedTapDetector.start();
+		//mIntegratedTapDetector.start();
 
 		mtapdetector = new TapDetector(this, (SensorManager) this.getSystemService(SENSOR_SERVICE));
 		//mtapdetector.addListener(this);

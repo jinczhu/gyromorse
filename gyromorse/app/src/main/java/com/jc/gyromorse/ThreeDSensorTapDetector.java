@@ -412,7 +412,7 @@ public class ThreeDSensorTapDetector {
 
         /* Force envelope to be at least lowLevel */
         envelope = Math.max(envelope, mDetectorType.possibleTapsLowLevel);
-        Log.e("here", String.format(
+        Log.v("here", String.format(
                 "Tap downgraded to noise at %d. Signal %f limit %f %f |%f", timestamp,
                 mLastConditionedMagnitudeSq, envelope, y1, ((float) timestamp - x1) / ((float) x2 - x1)));
 
@@ -420,7 +420,7 @@ public class ThreeDSensorTapDetector {
         if (mLastConditionedMagnitudeSq > envelope) {
             if (DEBUG)
             {
-                Log.e("here", String.format(
+                Log.v("here", String.format(
                         "Tap downgraded to noise at %d. Signal %f limit %f", timestamp,
                         mLastConditionedMagnitudeSq, envelope));
             }
